@@ -1,0 +1,253 @@
+{% extends "harvester/base.html" %}
+{% block title %}
+{% if form.instance.pk %}
+Leverans till {{form.instance}}
+{% else %}
+Ny leverans
+{% endif %}
+{% endblock %}
+{% block content %}
+<h1>Leverans</h1>
+<form action="" method="POST" class="uk-form uk-form-horizontal" novalidate>
+  {% csrf_token %}
+
+
+<div class="uk-form-row">
+<label class="uk-form-label">Kund</label>{{ form.customer.errors }}
+
+<div class="uk-form-controls">{{ form.customer }}</div>
+  </div>
+
+<div class="uk-form-row">
+<label class="uk-form-label">Önskat leveransdatum</label>{{ form.target_date.errors }}
+
+<div class="uk-form-controls">{{ form.target_date }}</div>
+  </div>
+
+
+<div class="uk-form-row">
+<label class="uk-form-label">Prislista</label>{{ form.price_list.errors }}
+
+<div class="uk-form-controls">{{ form.price_list }}</div>
+</div>
+    {% for hidden in form.hidden_fields %}
+{{ hidden }}
+{% endfor %}
+
+                {{ delivery_item_form.management_form }}
+                {{ delivery_item_form.non_form_errors }}
+<div class="table">
+<table class="uk-table" >
+
+
+
+<tr>
+    <colgroup span="5" style="border:solid"></colgroup>
+    <colgroup span="3" style="border:solid"></colgroup>
+    <colgroup span="3" style="border:solid"></colgroup>
+    <th colspan="5">Beställning</th>
+    <th colspan="3">Pris</th>
+    <th colspan="2">Levererat</th>
+</tr>
+    <tr>
+        <th>Gröda</th>
+        <th>Form</th>
+    <th>Beställd mängd</th>
+    <th>Enhet</th>
+    <th>Önskemål</th>
+
+
+
+
+    <th></th>Pris</th>
+
+    <th>Enhet (pris)</th>
+    <th>Rabatt</th>
+
+    <th>Packad mängd</th>
+    <th>Avvikelse</th>
+</tr>
+
+{% for form2 in delivery_item_form %}
+
+<tr>
+<td>{{form2.crop}}
+    {{form2.crop.errors}} </td>
+<td>{{form2.crop_form}} {{form2.crop_form.errors}} </td>
+<td>{{form2.order_amount}} {{form2.order_amount.errors}} </td>
+<td>{{form2.order_unit}} {{form2.order_unit.errors}} </td>
+<td>{{form2.order_comment}}{{form2.order_comment.errors}}</td>
+
+
+<td>{{form2.price}} {{form2.price.errors}} </td>
+<td>{{form2.price_type}} {{form2.price_type.errors}} </td>
+<td>{{form2.discount}} {{form2.discount.errors}} </td>
+    <td>0</td>
+    <td>{{form2.delivery_comment}}{{form2.delivery_comment.errors}}</td>
+<td>            {% if delivery_item_form.can_delete %}
+                {{ form2.DELETE }}
+            {% endif %}
+</td>
+
+    {% for hidden in form2.hidden_fields %}
+{{ hidden }}
+{% endfor %}
+</tr>
+{% endfor %}
+
+</table>
+</div>
+<script>
+       $('[id ^=id_deliveryitem_set][id $=crop]').each(function( index ) {
+            this.val=this.data('def');
+            console.log(this.val);
+            console.log(this.data('def');
+       }
+
+
+
+
+       $('[id ^=id_deliveryitem_set][id $=crop]').css("width","5em")
+       $('[id ^=id_deliveryitem_set][id $=order_amount]').css("width","4em").attr("placeholder", "antal/vikt");
+       $('[id ^=id_deliveryitem_set][id $=order_unit]').css("width","5em").attr("placeholder", "st/kg?");
+       $('[id ^=id_deliveryitem_set][id $=price]').css("width","5em").attr("placeholder", "kr");
+       $('[id ^=id_deliveryitem_set][id $=price_unit]').css("width","5em").attr("placeholder", "st/kg");
+       $('[id ^=id_deliveryitem_set][id $=discount]').css("width","5em")
+       $('[id ^=id_deliveryitem_set][id $=order_comment]').css("width","20em").attr("placeholder", "Stora/små/färg osv");
+       $('[id ^=id_deliveryitem_set][id $=crop]').css("width","5em").attr("placeholder", "förklaring till avvikelse");
+
+
+</script>
+
+  <input id="save_harvest_item" type="submit" value="Save" />
+<script>
+
+
+
+
+$( document ).ready(function() {
+
+
+$('[id=id_customer]').on('change', function()
+{
+			var params = { csrfmiddlewaretoken: "{{ csrf_token }}"  };
+			console.log(this);
+			var self=this;
+			console.log(params);
+            jQuery.ajax({
+              async: true,
+              type: "POST",
+              url: '{% url 'data_crop_forms_and_price' 000 %}'.replace (000, this.value),
+
+              data: jQuery.param( params ),
+              success: function(response) {
+              // TODO reset other fields!
+                    result = JSON.parse(response);
+                    if (result) {
+
+                        var forms = $(self).closest("tr").find('[id$="crop_form"]');
+
+                        forms.empty()  // Use to empty the select
+
+                        for(var i=0;i < result.item_list.length;i++){
+                            forms.append($('<option>', {
+                                value: result.item_list[i]['id'],
+                                text: result.item_list[i]['name']
+                        }));
+                        }
+
+                    } else {
+                        console.log('error');
+                    }
+                }
+            });
+
+
+});
+
+$('[id ^=id_deliveryitem_set][id $=crop]').on('change', function()
+{
+			var params = { csrfmiddlewaretoken: "{{ csrf_token }}", crop_id: this.value  };
+			console.log(this);
+			var self=this;
+			console.log(params);
+            jQuery.ajax({
+              async: true,
+              type: "POST",
+              url: '{% url 'ajax_orderunits_by_crop' 000 %}'.replace (000, this.value),
+
+              data: jQuery.param( params ),
+              success: function(response) {
+              // TODO reset other fields!
+                    result = JSON.parse(response);
+                    if (result) {
+
+                        var forms = $(self).closest("tr").find('[id$="crop_form"]');
+
+                        forms.empty()  // Use to empty the select
+
+                        for(var i=0;i < result.item_list.length;i++){
+                            forms.append($('<option>', {
+                                value: result.item_list[i]['id'],
+                                text: result.item_list[i]['name']
+                        }));
+                        }
+
+                    } else {
+                        console.log('error');
+                    }
+                }
+            });
+
+
+});
+
+$('[id ^=id_deliveryitem_set][id $=crop_form]').on('change', function()
+{
+			var forms = $(this).closest("tr").find('[value="U"]');
+			forms.text( "kr/"+$(this).find("option:selected").html());
+			console.log(forms);
+			console.log(this.text);
+			console.log(this)
+			console.log( $(this).find("option:selected").html());
+/*
+			var params = { csrfmiddlewaretoken: "{{ csrf_token }}", crop_id: this.value  };
+			console.log(this);
+			var self=this;
+			console.log(params);
+            jQuery.ajax({
+              async: true,
+              type: "POST",
+              url: "ajax_orderunits_by_crop",
+              data: jQuery.param( params ),
+              success: function(response) {
+              // TODO reset other fields!
+                    result = JSON.parse(response);
+                    if (result) {
+
+                        var forms = $(self).closest("tr").find('[value="U"]');
+                        console.log(forms);
+                        forms.empty()  // Use to empty the select
+
+                        for(var i=0;i < result.item_list.length;i++){
+                            forms.append($('<option>', {
+                                value: result.item_list[i]['id'],
+                                text: result.item_list[i]['name']
+                        }));
+                        }
+
+                    } else {
+                        console.log('error');
+                    }
+                }
+            });
+*/
+
+});
+
+
+
+});
+</script>
+</form>
+{% endblock %}

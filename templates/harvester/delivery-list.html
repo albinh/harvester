@@ -1,0 +1,58 @@
+{% extends "harvester/base.html" %}
+{% block content %}
+
+<div id="d-list">
+
+<table id="data-table" class="uk-table uk-table-hover uk-table-striped" cellspacing="0" width="100%">
+<thead>
+<tr><th>Kund</th><th>Önskat leveransdatum</th><th>Grödor</th><th></th></tr>
+</thead>
+<tbody class="list2">
+    {% for delivery in object_list %}
+
+    <tr >
+
+    <td class="customer"><a href="{% url 'delivery-edit' delivery.id %}">{{ delivery.customer}}</a></td>
+    <td class="date">{{delivery.target_date}}</td>
+    <td class="crop">
+    {% for i in delivery.deliveryitem_set.all %}
+       {% if i.is_complete %}
+
+            <div class=" uk-badge uk-badge-success">
+        {% elif i.is_started %}
+                <div class=" uk-badge uk-badge-warning">
+        {% else %}
+                 <div class=" uk-badge uk-badge-danger">
+                     {%endif%}
+    <a href="{% url "harvest-new" %}?delivery_item={{i.id}}">
+        {{i.crop_form.crop }}
+                     </a>
+            </div>
+
+
+    {% endfor %}
+    </td>
+    <td>                               <div class="uk-button-dropdown" data-uk-dropdown>
+                                    <button class="uk-button">Ändra <i class="uk-icon-caret-down"></i></button>
+                                    <div class="uk-dropdown">
+                                        <ul class="uk-nav uk-nav-dropdown">
+                                            <li><a href="#">Redigera leverans</a></li>
+                                            <li><a href="#">Markera som levererad</a></li>
+                                            <li><a href="#">Skriv ut följesedel</a></li>
+                                            <li><a href="#">Markera som levererad</a></li>
+                                            <li><a href="#">Ta bort leverans</a></li>
+                                        </ul>
+                                    </div>
+                                </div></td>
+</tr>
+{% endfor %}
+    </tbody>
+</table>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#data-table').DataTable();
+} );
+</script>
+{% endblock %}
